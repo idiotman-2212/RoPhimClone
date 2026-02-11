@@ -37,7 +37,22 @@ export async function fetchCountries() {
   return res.json();
 }
 
-export async function fetchByCategory(type, slug, page = 1) {
-  const res = await fetch(`${BASE}/v1/api/${type}/${slug}?page=${page}`);
+export async function fetchByCategory(type, slug, page = 1, filters = {}) {
+  const params = new URLSearchParams({ page: String(page) });
+  if (filters.country) params.set('country', filters.country);
+  if (filters.year) params.set('year', filters.year);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.sort && filters.sort !== '_id') params.set('sort_field', filters.sort);
+  const res = await fetch(`${BASE}/v1/api/${type}/${slug}?${params.toString()}`);
+  return res.json();
+}
+
+export async function fetchMoviesByTypeWithFilters(type, page = 1, filters = {}) {
+  const params = new URLSearchParams({ page: String(page) });
+  if (filters.country) params.set('country', filters.country);
+  if (filters.year) params.set('year', filters.year);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.sort && filters.sort !== '_id') params.set('sort_field', filters.sort);
+  const res = await fetch(`${BASE}/v1/api/danh-sach/${type}?${params.toString()}`);
   return res.json();
 }

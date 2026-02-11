@@ -244,6 +244,22 @@ ol {
   color: var(--text-primary);
 }
 
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.list-header .page-title { margin-bottom: 0; }
+.total-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .movie-grid {
