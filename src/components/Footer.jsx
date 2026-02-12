@@ -39,7 +39,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer__bottom">
-          <p>© 2026 RổPhim. Powered by OPhim API. Đây là dự án demo.</p>
+          <p>© 2026 RổPhim. Design by Chau Huy Dien.</p>
         </div>
       </div>
     </footer>
