@@ -5,6 +5,9 @@ import HomePage from './pages/HomePage';
 import MovieListPage from './pages/MovieListPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import SearchPage from './pages/SearchPage';
+import FootballPage from './pages/FootballPage';
+import FootballLeaguePage from './pages/FootballLeaguePage';
+import FootballHighlightsPage from './pages/FootballHighlightsPage';
 
 export default function App() {
   return (
@@ -17,6 +20,9 @@ export default function App() {
         <Route path="/quoc-gia/:slug" element={<MovieListPage />} />
         <Route path="/phim/:slug" element={<MovieDetailPage />} />
         <Route path="/tim-kiem" element={<SearchPage />} />
+        <Route path="/bong-da" element={<FootballPage />} />
+        <Route path="/bong-da/giai-dau/:leagueId" element={<FootballLeaguePage />} />
+        <Route path="/bong-da/highlights" element={<FootballHighlightsPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>

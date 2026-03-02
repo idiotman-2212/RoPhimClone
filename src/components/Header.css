@@ -93,6 +93,18 @@
   color: var(--text-primary);
 }
 
+/* Football Dropdown */
+.dropdown-menu--football {
+  grid-template-columns: 1fr;
+  min-width: 220px;
+}
+.dropdown-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
 /* Search */
 .header__actions { display: flex; align-items: center; gap: 8px; }
 .search-form {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiMenu, FiX, FiChevronDown } from 'react-icons/fi';
 import { fetchGenres, fetchCountries } from '../services/api';
+import { LEAGUES } from '../services/footballApi';
 import './Header.css';
 
 const NAV_ITEMS = [
@@ -66,6 +67,30 @@ export default function Header() {
                 <Link to={item.path} onClick={() => setMobileOpen(false)}>{item.label}</Link>
               </li>
             ))}
+            <li className="nav-item nav-item--dropdown"
+                onMouseEnter={() => setDropdownOpen('football')}
+                onMouseLeave={() => setDropdownOpen(null)}>
+              <Link to="/bong-da" className="nav-dropdown-trigger">
+                Bóng Đá <FiChevronDown />
+              </Link>
+              {dropdownOpen === 'football' && (
+                <div className="dropdown-menu dropdown-menu--football">
+                  <Link to="/bong-da" onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
+                    Trang Chủ Bóng Đá
+                  </Link>
+                  <Link to="/bong-da/highlights" onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
+                    Video Highlights
+                  </Link>
+                  <div className="dropdown-divider" />
+                  {LEAGUES.map(l => (
+                    <Link key={l.id} to={`/bong-da/giai-dau/${l.id}`}
+                          onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
+                      {l.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </li>
             <li className="nav-item nav-item--dropdown"
                 onMouseEnter={() => setDropdownOpen('genre')}
                 onMouseLeave={() => setDropdownOpen(null)}>
