@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { FiChevronUp } from 'react-icons/fi';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -8,6 +10,28 @@ import SearchPage from './pages/SearchPage';
 import FootballPage from './pages/FootballPage';
 import FootballLeaguePage from './pages/FootballLeaguePage';
 import FootballHighlightsPage from './pages/FootballHighlightsPage';
+
+function ScrollToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <button
+      className={`scroll-top-btn ${visible ? 'visible' : ''}`}
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Scroll to top"
+    >
+      <FiChevronUp />
+      <span>ĐẦU</span>
+      <span>TRANG</span>
+    </button>
+  );
+}
 
 export default function App() {
   return (
@@ -25,6 +49,7 @@ export default function App() {
         <Route path="/bong-da/highlights" element={<FootballHighlightsPage />} />
       </Routes>
       <Footer />
+      <ScrollToTop />
     </BrowserRouter>
   );
 }

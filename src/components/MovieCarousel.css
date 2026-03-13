@@ -1,0 +1,106 @@
+/* Movie Carousel - horizontal scroll section */
+.movie-carousel {
+  position: relative;
+}
+
+.mc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+.mc-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+.mc-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+.mc-link:hover {
+  color: #fff;
+  gap: 8px;
+}
+
+.mc-track-wrap {
+  position: relative;
+}
+.mc-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 4px;
+}
+.mc-track::-webkit-scrollbar {
+  display: none;
+}
+
+.mc-slide {
+  flex: 0 0 280px;
+  min-width: 0;
+}
+
+/* Arrow */
+.mc-arrow {
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 5;
+  opacity: 0;
+}
+.mc-track-wrap:hover .mc-arrow {
+  opacity: 1;
+}
+.mc-arrow:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Fade edge effect */
+.mc-track-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 100%;
+  background: linear-gradient(to left, var(--bg-color), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .mc-title { font-size: 1.3rem; }
+  .mc-slide { flex: 0 0 220px; }
+  .mc-arrow { display: none; }
+  .mc-track-wrap::after { width: 40px; }
+}
+@media (max-width: 480px) {
+  .mc-slide { flex: 0 0 180px; }
+}

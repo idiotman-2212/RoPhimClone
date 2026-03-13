@@ -44,7 +44,7 @@
   transition: all var(--transition-fast);
 }
 .filter-clear:hover {
-  background: rgba(229, 9, 20, 0.1);
+  background: rgba(255, 216, 117, 0.1);
 }
 .filter-bar__body {
   display: grid;
@@ -88,7 +88,7 @@
 .filter-group select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 216, 117, 0.2);
 }
 
 @media (max-width: 768px) {

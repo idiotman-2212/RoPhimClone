@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiSearch, FiMenu, FiX, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiMenu, FiX, FiChevronDown, FiUser } from 'react-icons/fi';
 import { fetchGenres, fetchCountries } from '../services/api';
 import { LEAGUES } from '../services/footballApi';
 import './Header.css';
@@ -15,7 +15,6 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [genres, setGenres] = useState([]);
@@ -35,15 +34,10 @@ export default function Header() {
     fetchCountries().then(r => { if (r.data?.items) setCountries(r.data.items); });
   }, []);
 
-  useEffect(() => {
-    if (searchOpen && searchRef.current) searchRef.current.focus();
-  }, [searchOpen]);
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/tim-kiem?keyword=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchOpen(false);
       setSearchQuery('');
       setMobileOpen(false);
     }
@@ -51,16 +45,52 @@ export default function Header() {
 
   return (
     <header className={`header ${scrolled ? 'header--scrolled' : ''}`}>
-      <div className="header__inner container">
+      <div className="header__inner">
+        {/* Mobile menu button */}
+        <button className="mobile-toggle" onClick={() => setMobileOpen(true)}>
+          <FiMenu />
+        </button>
+
+        {/* Logo */}
         <Link to="/" className="header__logo">
-          <span className="logo-icon">🎬</span>
-          <span className="logo-text">Rổ<span className="logo-accent">Phim</span></span>
+          <div className="logo-icon-wrap">
+            <span className="logo-play">▶</span>
+          </div>
+          <div className="logo-text-group">
+            <span className="logo-text">Ro<span className="logo-accent">Phim</span></span>
+            <span className="logo-subtitle">Phim hay cả rổ</span>
+          </div>
         </Link>
 
+        {/* Search bar - always visible on desktop */}
+        <form className="header__search" onSubmit={handleSearch}>
+          <FiSearch className="search-icon" />
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder="Tìm kiếm phim, diễn viên"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </form>
+
+        {/* Nav + Member */}
         <nav className={`header__nav ${mobileOpen ? 'header__nav--open' : ''}`}>
           <button className="mobile-close" onClick={() => setMobileOpen(false)}>
             <FiX />
           </button>
+
+          {/* Mobile search */}
+          <form className="mobile-search" onSubmit={handleSearch}>
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm phim..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </form>
+
           <ul className="nav-list">
             {NAV_ITEMS.map(item => (
               <li key={item.path} className="nav-item">
@@ -128,18 +158,16 @@ export default function Header() {
           </ul>
         </nav>
 
-        <div className="header__actions">
-          <form className={`search-form ${searchOpen ? 'search-form--open' : ''}`} onSubmit={handleSearch}>
-            <input ref={searchRef} type="text" placeholder="Tìm phim..."
-                   value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-            <button type="button" className="search-toggle" onClick={() => setSearchOpen(!searchOpen)}>
-              <FiSearch />
-            </button>
-          </form>
-          <button className="mobile-toggle" onClick={() => setMobileOpen(true)}>
-            <FiMenu />
-          </button>
-        </div>
+        {/* Member button */}
+        <button className="header__member">
+          <FiUser />
+          <span>Thành viên</span>
+        </button>
+
+        {/* Mobile search toggle */}
+        <button className="mobile-search-toggle" onClick={() => searchRef.current?.focus()}>
+          <FiSearch />
+        </button>
       </div>
       {mobileOpen && <div className="mobile-overlay" onClick={() => setMobileOpen(false)} />}
     </header>

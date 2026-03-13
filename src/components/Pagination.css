@@ -27,7 +27,7 @@
 }
 .pagination__btn--active {
   background: var(--accent) !important;
-  color: white !important;
+  color: var(--accent-text) !important;
   border-color: var(--accent) !important;
 }
 .pagination__btn:disabled {

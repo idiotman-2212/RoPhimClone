@@ -1,24 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../services/api';
-import { FiChevronLeft, FiChevronRight, FiPlay } from 'react-icons/fi';
+import { FiPlay, FiHeart, FiInfo } from 'react-icons/fi';
 import './HeroCarousel.css';
 
 export default function HeroCarousel({ movies = [] }) {
   const [current, setCurrent] = useState(0);
-  const items = movies.slice(0, 7);
+  const items = movies.slice(0, 10);
 
   const next = useCallback(() => {
     setCurrent(prev => (prev + 1) % items.length);
   }, [items.length]);
 
-  const prev = useCallback(() => {
-    setCurrent(prev => (prev - 1 + items.length) % items.length);
-  }, [items.length]);
-
   useEffect(() => {
     if (items.length === 0) return;
-    const timer = setInterval(next, 5000);
+    const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
   }, [next, items.length]);
 
@@ -27,43 +23,83 @@ export default function HeroCarousel({ movies = [] }) {
   const movie = items[current];
   const bg = getImageUrl(movie.poster_url || movie.thumb_url);
 
+  // Build meta badges
+  const metaBadges = [];
+  if (movie.tmdb?.vote_average) {
+    metaBadges.push({ label: `IMDb ${movie.tmdb.vote_average.toFixed(1)}`, type: 'imdb' });
+  }
+  if (movie.year) metaBadges.push({ label: String(movie.year), type: 'outline' });
+  if (movie.episode_total) metaBadges.push({ label: `Phần ${movie.episode_total}`, type: 'outline' });
+  if (movie.episode_current) metaBadges.push({ label: movie.episode_current, type: 'outline' });
+
   return (
     <div className="hero">
-      <div className="hero__bg" style={{ backgroundImage: `url(${bg})` }} />
+      {/* Background poster */}
+      <div className="hero__bg" style={{ backgroundImage: `url(${bg})` }} key={current} />
       <div className="hero__gradient" />
+
+      {/* Content overlay */}
       <div className="hero__content container">
-        <div className="hero__info">
-          <div className="hero__badges">
-            {movie.quality && <span className="badge badge-quality">{movie.quality}</span>}
-            {movie.lang && <span className="badge badge-lang">{movie.lang}</span>}
-            {movie.year && <span className="badge badge-year">{movie.year}</span>}
-          </div>
+        <div className="hero__info" key={`info-${current}`}>
           <h1 className="hero__title">{movie.name}</h1>
           <p className="hero__origin">{movie.origin_name}</p>
-          <div className="hero__meta">
-            {movie.category?.map(c => (
-              <Link key={c.slug} to={`/the-loai/${c.slug}`} className="hero__tag">{c.name}</Link>
-            ))}
-          </div>
+
+          {/* Meta badges row */}
+          {metaBadges.length > 0 && (
+            <div className="hero__meta-badges">
+              {metaBadges.map((b, i) => (
+                <span key={i} className={`badge-${b.type}`}>{b.label}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Genre tags */}
+          {movie.category?.length > 0 && (
+            <div className="hero__genres">
+              {movie.category.map(c => (
+                <Link key={c.slug} to={`/the-loai/${c.slug}`} className="hero__genre-tag">
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Description */}
+          {movie.content && (
+            <p className="hero__desc lim-3" dangerouslySetInnerHTML={{
+              __html: movie.content.replace(/<[^>]*>/g, '').substring(0, 200) + '...'
+            }} />
+          )}
+
+          {/* Action buttons */}
           <div className="hero__actions">
-            <Link to={`/phim/${movie.slug}`} className="hero__btn hero__btn--primary">
-              <FiPlay /> Xem Ngay
+            <Link to={`/phim/${movie.slug}`} className="hero__play-btn">
+              <FiPlay />
             </Link>
-            <Link to={`/phim/${movie.slug}`} className="hero__btn hero__btn--secondary">
-              Chi Tiết
+            <button className="hero__action-icon" title="Yêu thích">
+              <FiHeart />
+            </button>
+            <Link to={`/phim/${movie.slug}`} className="hero__action-icon" title="Chi tiết">
+              <FiInfo />
             </Link>
           </div>
         </div>
-      </div>
-      <div className="hero__controls">
-        <button className="hero__arrow" onClick={prev}><FiChevronLeft /></button>
-        <button className="hero__arrow" onClick={next}><FiChevronRight /></button>
-      </div>
-      <div className="hero__dots">
-        {items.map((_, i) => (
-          <button key={i} className={`hero__dot ${i === current ? 'hero__dot--active' : ''}`}
-                  onClick={() => setCurrent(i)} />
-        ))}
+
+        {/* Thumbnail selector */}
+        <div className="hero__thumbs">
+          {items.map((m, i) => {
+            const thumbSrc = getImageUrl(m.thumb_url || m.poster_url);
+            return (
+              <button
+                key={m._id || m.slug || i}
+                className={`hero__thumb ${i === current ? 'hero__thumb--active' : ''}`}
+                onClick={() => setCurrent(i)}
+              >
+                <img src={thumbSrc} alt={m.name} loading="lazy" />
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
