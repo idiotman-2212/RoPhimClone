@@ -8,12 +8,12 @@ import MovieCard from '../components/MovieCard';
 import { FiChevronRight } from 'react-icons/fi';
 
 const CAROUSEL_SECTIONS = [
-  { title: 'Phim Hàn Quốc tập mới', type: 'phim-bo', path: '/danh-sach/phim-bo' },
-  { title: 'Phim Hành Động Mới', type: 'phim-le', path: '/danh-sach/phim-le' },
-  { title: 'Hoạt Hình Hay', type: 'hoat-hinh', path: '/danh-sach/hoat-hinh' },
+  { titlePrefix: 'Phim', titleHighlight: 'Hàn Quốc', titleSuffix: ' tập mới', highlightClass: 'highlight-pink', type: 'phim-bo', path: '/danh-sach/phim-bo' },
+  { titlePrefix: 'Phim', titleHighlight: 'Hành Động', titleSuffix: ' Mới', highlightClass: 'highlight-blue', type: 'phim-le', path: '/danh-sach/phim-le' },
+  { titlePrefix: '', titleHighlight: 'Hoạt Hình', titleSuffix: ' Hay', highlightClass: 'highlight-orange', type: 'hoat-hinh', path: '/danh-sach/hoat-hinh' },
 ];
 
-const GRID_SECTION = { title: 'Phim Mới Cập Nhật', type: 'phim-moi-cap-nhat', path: '/danh-sach/phim-moi-cap-nhat' };
+const GRID_SECTION = { titlePrefix: 'Phim', titleHighlight: 'Mới', titleSuffix: ' Cập Nhật', highlightClass: 'highlight-green', type: 'phim-moi-cap-nhat', path: '/danh-sach/phim-moi-cap-nhat' };
 
 export default function HomePage() {
   const [heroMovies, setHeroMovies] = useState([]);
@@ -77,7 +77,11 @@ export default function HomePage() {
             return (
               <MovieCarousel
                 key={section.type}
-                title={section.title}
+                title={
+                  <>
+                    {section.titlePrefix} <span className={section.highlightClass}>{section.titleHighlight}</span>{section.titleSuffix}
+                  </>
+                }
                 linkTo={section.path}
                 movies={items}
               />
@@ -88,7 +92,9 @@ export default function HomePage() {
           {gridMovies.length > 0 && (
             <div className="section">
               <div className="section-header">
-                <h2 className="section-title">{GRID_SECTION.title}</h2>
+                <h2 className="section-title">
+                  {GRID_SECTION.titlePrefix} <span className={GRID_SECTION.highlightClass}>{GRID_SECTION.titleHighlight}</span>{GRID_SECTION.titleSuffix}
+                </h2>
                 <Link to={GRID_SECTION.path} className="section-link">
                   Xem tất cả <FiChevronRight />
                 </Link>

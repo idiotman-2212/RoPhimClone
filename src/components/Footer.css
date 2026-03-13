@@ -27,9 +27,11 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
-.footer__logo img {
+.footer__logo-img {
   height: 60px;
   width: auto;
+  max-width: 250px;
+  object-fit: contain;
 }
 .footer__logo:hover { color: var(--text-primary); }
 .footer__desc {

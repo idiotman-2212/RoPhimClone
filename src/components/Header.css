@@ -33,40 +33,11 @@ header, .header {
   z-index: 3;
 }
 .header__logo:hover { color: var(--text-primary); }
-.logo-icon-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2a2d3e, #1a1d2e);
-  border: 2px solid rgba(255, 216, 117, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.logo-play {
-  color: var(--accent-gold);
-  font-size: 14px;
-  margin-left: 2px;
-}
-.logo-text-group {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-.logo-text {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-.logo-accent { color: var(--accent); }
-.logo-subtitle {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.5px;
-  font-style: italic;
+.logo-img {
+  height: 44px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
 }
 
 /* Search Bar - centered, always visible */
@@ -111,7 +82,28 @@ header, .header {
   align-items: center;
   gap: 0;
 }
-.nav-item a, .nav-dropdown-trigger {
+.header__.nav-item > a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all var(--transition-fast);
+}
+
+.nav-item > a:hover {
+  color: var(--primary-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-badge {
+  transform: translateY(-8px);
+}
+
+.nav-item a { /* Original .nav-item a, .nav-dropdown-trigger rule split and modified */
   display: flex;
   align-items: center;
   gap: 4px;
@@ -120,6 +112,19 @@ header, .header {
   font-size: 0.92rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: 8px;
   transition: all var(--transition-fast);
   cursor: pointer;
   white-space: nowrap;

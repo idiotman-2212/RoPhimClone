@@ -7,8 +7,7 @@ export default function Footer() {
       <div className="container footer__inner">
         <div className="footer__brand">
           <Link to="/" className="footer__logo">
-            <span className="logo-icon">🎬</span>
-            <span className="logo-text">Rổ<span className="logo-accent">Phim</span></span>
+            <img src="/logo.png" alt="RoPhim" className="footer__logo-img" />
           </Link>
           <p className="footer__desc">
             Xem phim online miễn phí chất lượng cao với phụ đề tiếng Việt - Vietsub, Thuyết minh. 

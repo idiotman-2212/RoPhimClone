@@ -6,11 +6,13 @@ import { LEAGUES } from '../services/footballApi';
 import './Header.css';
 
 const NAV_ITEMS = [
+  { label: 'News', path: '/tin-tuc', badge: 'MỚI', badgeClass: 'badge-new' },
   { label: 'Phim Mới', path: '/danh-sach/phim-moi-cap-nhat' },
   { label: 'Phim Bộ', path: '/danh-sach/phim-bo' },
   { label: 'Phim Lẻ', path: '/danh-sach/phim-le' },
   { label: 'Hoạt Hình', path: '/danh-sach/hoat-hinh' },
   { label: 'TV Shows', path: '/danh-sach/tv-shows' },
+  { label: 'Review', path: '/review', badge: 'HOT', badgeClass: 'badge-hot' },
 ];
 
 export default function Header() {
@@ -53,13 +55,7 @@ export default function Header() {
 
         {/* Logo */}
         <Link to="/" className="header__logo">
-          <div className="logo-icon-wrap">
-            <span className="logo-play">▶</span>
-          </div>
-          <div className="logo-text-group">
-            <span className="logo-text">Ro<span className="logo-accent">Phim</span></span>
-            <span className="logo-subtitle">Phim hay cả rổ</span>
-          </div>
+          <img src="/logo.png" alt="RoPhim" className="logo-img" />
         </Link>
 
         {/* Search bar - always visible on desktop */}
@@ -94,7 +90,10 @@ export default function Header() {
           <ul className="nav-list">
             {NAV_ITEMS.map(item => (
               <li key={item.path} className="nav-item">
-                <Link to={item.path} onClick={() => setMobileOpen(false)}>{item.label}</Link>
+                <Link to={item.path} onClick={() => setMobileOpen(false)}>
+                  {item.label}
+                  {item.badge && <span className={`badge ${item.badgeClass} nav-badge`}>{item.badge}</span>}
+                </Link>
               </li>
             ))}
             <li className="nav-item nav-item--dropdown"
