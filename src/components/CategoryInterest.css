@@ -15,11 +15,12 @@
 }
 .ci-card {
   position: relative;
-  padding: 20px 16px;
-  border-radius: 14px;
-  min-height: 80px;
+  padding: 0 16px;
+  border-radius: 20px;
+  height: 44px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   text-decoration: none;
   transition: all var(--transition-fast);
@@ -41,7 +42,7 @@
 }
 @media (max-width: 768px) {
   .ci-grid { grid-template-columns: repeat(3, 1fr); }
-  .ci-card { min-height: 65px; padding: 14px 12px; }
+  .ci-card { height: 38px; padding: 0 12px; }
   .ci-label { font-size: 0.85rem; }
 }
 @media (max-width: 480px) {

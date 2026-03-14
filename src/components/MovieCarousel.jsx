@@ -17,7 +17,7 @@ export default function MovieCarousel({ title, linkTo, movies = [] }) {
 
   return (
     <div className="movie-carousel">
-      <div className="mc-header">
+      <div className="mc-sidebar">
         <h2 className="mc-title">{title}</h2>
         {linkTo && (
           <Link to={linkTo} className="mc-link">

@@ -42,11 +42,12 @@ header, .header {
 
 /* Search Bar - centered, always visible */
 .header__search {
-  flex: 0 1 420px;
+  flex: 1 1 500px;
+  max-width: 600px;
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 42px;
+  height: 48px;
   padding: 0 16px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -80,57 +81,38 @@ header, .header {
 .nav-list {
   display: flex;
   align-items: center;
-  gap: 0;
-}
-.header__.nav-item > a {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 15px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  transition: all var(--transition-fast);
+  gap: 2px;
 }
 
-.nav-item > a:hover {
-  color: var(--primary-text);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.nav-badge {
-  transform: translateY(-8px);
-}
-
-.nav-item a { /* Original .nav-item a, .nav-dropdown-trigger rule split and modified */
+.nav-item a, .nav-dropdown-trigger { 
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 0.65rem;
-  line-height: 36px;
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  padding: 0 10px;
+  line-height: 40px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #ccc;
   transition: all var(--transition-fast);
   cursor: pointer;
   white-space: nowrap;
 }
-.nav-dropdown-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 15px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  transition: all var(--transition-fast);
-  cursor: pointer;
-  white-space: nowrap;
-}
+
 .nav-item a:hover, .nav-dropdown-trigger:hover {
   color: #fff;
+}
+
+.nav-item-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  line-height: normal !important;
+  padding: 6px 10px !important;
+}
+
+.nav-badge {
+  transform: translateY(-8px) scale(0.85);
+  margin-left: -2px;
 }
 
 /* Dropdown */
@@ -184,21 +166,21 @@ header, .header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 18px;
-  height: 38px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 0.85rem;
+  padding: 0 16px;
+  height: 48px;
+  background: #fff;
+  border-radius: 24px;
+  color: #000;
+  font-size: 1rem;
   font-weight: 500;
   transition: all var(--transition-fast);
   flex-shrink: 0;
   cursor: pointer;
+  border: none;
 }
 .header__member:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: #f0f0f0;
+  transform: scale(1.02);
 }
 
 /* Mobile */

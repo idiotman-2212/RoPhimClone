@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchNewMovies, fetchMoviesByType } from '../services/api';
+import { fetchMoviesByType } from '../services/api';
 import HeroCarousel from '../components/HeroCarousel';
 import MovieCarousel from '../components/MovieCarousel';
 import CategoryInterest from '../components/CategoryInterest';
@@ -31,10 +31,9 @@ export default function HomePage() {
           ...CAROUSEL_SECTIONS.map(s => fetchMoviesByType(s.type)),
         ]);
 
-        // Grid section
+        // Grid section (newly updated movies, less metadata)
         const gridItems = gridRes.data?.items || gridRes.items || [];
         setGridMovies(gridItems);
-        setHeroMovies(gridItems.slice(0, 10));
 
         // Carousel sections
         const newCarouselData = {};
@@ -43,6 +42,10 @@ export default function HomePage() {
           newCarouselData[CAROUSEL_SECTIONS[i].type] = items;
         });
         setCarouselData(newCarouselData);
+
+        // Feed rich data to Hero Banner (from Phim Bộ)
+        const phimBoItems = newCarouselData['phim-bo'] || [];
+        setHeroMovies(phimBoItems.slice(0, 10));
       } catch (err) {
         console.error('Error loading homepage:', err);
       } finally {

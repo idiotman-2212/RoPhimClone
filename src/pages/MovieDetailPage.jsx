@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchMovieDetail, fetchMoviesByType, getImageUrl } from '../services/api';
 import MovieCard from '../components/MovieCard';
-import { FiPlay, FiHeart, FiPlus, FiShare2, FiStar, FiChevronLeft, FiList } from 'react-icons/fi';
+import { FiPlay, FiHeart, FiStar, FiChevronLeft, FiList, FiDownloadCloud, FiFlag, FiUser } from 'react-icons/fi';
 import './MovieDetailPage.css';
 
 export default function MovieDetailPage() {
@@ -104,10 +104,6 @@ export default function MovieDetailPage() {
                 <FiHeart />
                 <span>Yêu thích</span>
               </button>
-              <button className="md-action-item">
-                <FiPlus />
-                <span>Thêm vào</span>
-              </button>
               <button className="md-action-item" onClick={() => setLightsOff(!lightsOff)}>
                 <span>{lightsOff ? '💡' : '🌙'}</span>
                 <span>Tắt đèn</span>
@@ -116,8 +112,12 @@ export default function MovieDetailPage() {
                 </span>
               </button>
               <button className="md-action-item">
-                <FiShare2 />
-                <span>Chia sẻ</span>
+                <FiDownloadCloud />
+                <span>Tải xuống</span>
+              </button>
+              <button className="md-action-item">
+                <FiFlag />
+                <span>Báo lỗi</span>
               </button>
             </div>
             {activeEp && (
@@ -128,119 +128,111 @@ export default function MovieDetailPage() {
           </div>
         </div>
 
-        {/* Movie Info Section - 3 column layout */}
-        <div className="md-info-section">
-          <div className="md-info-layout">
-            {/* Left column: Poster + Title + Badges */}
-            <div className="md-info-left">
-              <div className="md-info-poster">
-                <img src={thumb} alt={movie.name} />
-              </div>
-              <div className="md-info-text">
-                <h1 className="md-movie-title">{movie.name}</h1>
-                <p className="md-movie-origin">{movie.origin_name}</p>
-
-                {/* Badges row */}
-                <div className="md-badges">
-                  {movie.tmdb?.vote_average > 0 && (
-                    <span className="md-badge md-badge--imdb">IMDb {movie.tmdb.vote_average.toFixed(1)}</span>
-                  )}
-                  {movie.year && <span className="md-badge">{movie.year}</span>}
-                  {movie.time && <span className="md-badge">{movie.time}</span>}
-                  {movie.episode_current && (
-                    <span className="md-badge">{movie.episode_current}</span>
-                  )}
+        {/* Main Content + Sidebar Layout */}
+        <div className="md-main-layout">
+          <div className="md-main-col">
+            
+            {/* Movie Info Section - Compact stacked layout */}
+            <div className="md-info-section">
+              <div className="md-info-compact">
+                <div className="md-info-poster">
+                  <img src={thumb} alt={movie.name} />
                 </div>
+                
+                <div className="md-info-text">
+                  <h1 className="md-movie-title">{movie.name}</h1>
+                  <p className="md-movie-origin">{movie.origin_name}</p>
 
-                {/* Genre tags */}
-                {movie.category?.length > 0 && (
-                  <div className="md-genre-tags">
-                    {movie.category.map(c => (
-                      <Link key={c.slug} to={`/the-loai/${c.slug}`} className="md-genre-tag">
-                        {c.name}
-                      </Link>
-                    ))}
+                  {/* Badges row */}
+                  <div className="md-badges">
+                    {movie.tmdb?.vote_average > 0 && (
+                      <span className="md-badge md-badge--imdb">IMDb {movie.tmdb.vote_average.toFixed(1)}</span>
+                    )}
+                    {movie.year && <span className="md-badge">{movie.year}</span>}
+                    {movie.time && <span className="md-badge">{movie.time}</span>}
+                    {movie.episode_current && (
+                      <span className="md-badge">{movie.episode_current}</span>
+                    )}
                   </div>
-                )}
 
-                {/* Completion status */}
-                {currentEp && (
-                  <div className={`md-status ${isCompleted ? 'md-status--done' : ''}`}>
-                    <span className="md-status-icon">{isCompleted ? '✅' : '🔄'}</span>
-                    <span>{isCompleted ? `Đã hoàn thành: ${currentEp}` : currentEp}
-                      {totalEps ? ` / ${totalEps}` : ''}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Center column: Description */}
-            <div className="md-info-center">
-              <div className="md-description">
-                <p>
-                  {movie.content
-                    ? movie.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
-                    : 'Đang cập nhật...'}
-                </p>
-              </div>
-              <Link to={`/phim/${movie.slug}`} className="md-more-link">
-                Thông tin phim &rsaquo;
-              </Link>
-
-              {/* Meta info */}
-              <div className="md-meta-grid">
-                {movie.country?.length > 0 && (
-                  <div className="md-meta-item">
-                    <span className="md-meta-label">Quốc gia:</span>
-                    <span className="md-meta-value">
-                      {movie.country.map((c, i) => (
-                        <span key={c.slug}>
-                          <Link to={`/quoc-gia/${c.slug}`}>{c.name}</Link>
-                          {i < movie.country.length - 1 && ', '}
-                        </span>
+                  {/* Genre tags */}
+                  {movie.category?.length > 0 && (
+                    <div className="md-genre-tags">
+                      {movie.category.map(c => (
+                        <Link key={c.slug} to={`/the-loai/${c.slug}`} className="md-genre-tag">
+                          {c.name}
+                        </Link>
                       ))}
-                    </span>
-                  </div>
-                )}
-                {movie.quality && (
-                  <div className="md-meta-item">
-                    <span className="md-meta-label">Chất lượng:</span>
-                    <span className="md-meta-value">{movie.quality}</span>
-                  </div>
-                )}
-                {movie.lang && (
-                  <div className="md-meta-item">
-                    <span className="md-meta-label">Ngôn ngữ:</span>
-                    <span className="md-meta-value">{movie.lang}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+                    </div>
+                  )}
 
-            {/* Right column: Rating */}
-            <div className="md-info-right">
-              <div className="md-rating-actions">
-                <div className="md-rating-action">
-                  <FiStar className="md-rating-icon" />
-                  <span>Đánh giá</span>
-                </div>
-                <div className="md-rating-action">
-                  <span className="md-rating-icon">💬</span>
-                  <span>Bình luận</span>
+                  {/* Meta info inline */}
+                  <div className="md-meta-grid">
+                    {movie.country?.length > 0 && (
+                      <div className="md-meta-item">
+                        <span className="md-meta-label">Quốc gia:</span>
+                        <span className="md-meta-value">
+                          {movie.country.map((c, i) => (
+                            <span key={c.slug}>
+                              <Link to={`/quoc-gia/${c.slug}`}>{c.name}</Link>
+                              {i < movie.country.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                    )}
+                    {movie.quality && (
+                      <div className="md-meta-item">
+                        <span className="md-meta-label">Chất lượng:</span>
+                        <span className="md-meta-value">{movie.quality}</span>
+                      </div>
+                    )}
+                    {movie.lang && (
+                      <div className="md-meta-item">
+                        <span className="md-meta-label">Ngôn ngữ:</span>
+                        <span className="md-meta-value">{movie.lang}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Completion status */}
+                  {currentEp && (
+                    <div className={`md-status ${isCompleted ? 'md-status--done' : ''}`}>
+                      <span className="md-status-icon">{isCompleted ? '✅' : '🔄'}</span>
+                      <span>{isCompleted ? `Đã hoàn thành: ${currentEp}` : currentEp}
+                        {totalEps ? ` / ${totalEps}` : ''}</span>
+                    </div>
+                  )}
+
                 </div>
               </div>
-              {movie.tmdb?.vote_average > 0 && (
-                <div className="md-score-box">
-                  <div className="md-score-star">
-                    <FiStar />
-                    <span>{movie.tmdb.vote_average.toFixed(1)}</span>
-                  </div>
-                  <button className="md-score-btn">Đánh giá</button>
+
+              {/* Description & Ratings Below */}
+              <div className="md-info-bottom">
+                <div className="md-description">
+                  <p>
+                    {movie.content
+                      ? movie.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+                      : 'Đang cập nhật...'}
+                  </p>
                 </div>
-              )}
+                <div className="md-rating-inline">
+                  {movie.tmdb?.vote_average > 0 && (
+                    <div className="md-score-box">
+                      <div className="md-score-star">
+                        <FiStar />
+                        <span>{movie.tmdb.vote_average.toFixed(1)}</span>
+                      </div>
+                      <button className="md-score-btn">Đánh giá</button>
+                    </div>
+                  )}
+                  <div className="md-rating-action">
+                    <span className="md-rating-icon">💬</span>
+                    <span>Bình luận</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
         {/* Episodes Section */}
         {episodes.length > 0 && (
@@ -288,6 +280,31 @@ export default function MovieDetailPage() {
             </div>
           </div>
         )}
+        
+        </div> {/* End md-main-col */}
+
+        {/* Sidebar Column */}
+        <div className="md-sidebar-col">
+          <div className="md-sidebar-widget">
+            <h3 className="md-sidebar-title">Top Diễn Viên</h3>
+            <div className="md-actor-list">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="md-actor-item">
+                  <div className="md-actor-avatar">
+                    <FiUser />
+                  </div>
+                  <div className="md-actor-info">
+                    <div className="md-actor-name">Đang cập nhật...</div>
+                    <div className="md-actor-role">Diễn viên</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div> {/* End md-sidebar-col */}
+        
+        </div> {/* End md-main-layout */}
+        
       </div>
     </div>
   );

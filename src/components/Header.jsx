@@ -2,17 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiMenu, FiX, FiChevronDown, FiUser } from 'react-icons/fi';
 import { fetchGenres, fetchCountries } from '../services/api';
-import { LEAGUES } from '../services/footballApi';
 import './Header.css';
 
 const NAV_ITEMS = [
-  { label: 'News', path: '/tin-tuc', badge: 'MỚI', badgeClass: 'badge-new' },
-  { label: 'Phim Mới', path: '/danh-sach/phim-moi-cap-nhat' },
-  { label: 'Phim Bộ', path: '/danh-sach/phim-bo' },
+  { label: 'Phim Mới', path: '/danh-sach/phim-moi-cap-nhat', badge: 'MỚI', badgeClass: 'badge-new' },
+  { label: 'Thể loại', path: '/the-loai', isDropdown: 'genre' },
   { label: 'Phim Lẻ', path: '/danh-sach/phim-le' },
+  { label: 'Phim Bộ', path: '/danh-sach/phim-bo' },
   { label: 'Hoạt Hình', path: '/danh-sach/hoat-hinh' },
   { label: 'TV Shows', path: '/danh-sach/tv-shows' },
-  { label: 'Review', path: '/review', badge: 'HOT', badgeClass: 'badge-hot' },
+  { label: 'Quốc gia', path: '/quoc-gia', isDropdown: 'country' },
 ];
 
 export default function Header() {
@@ -88,72 +87,58 @@ export default function Header() {
           </form>
 
           <ul className="nav-list">
-            {NAV_ITEMS.map(item => (
-              <li key={item.path} className="nav-item">
-                <Link to={item.path} onClick={() => setMobileOpen(false)}>
-                  {item.label}
-                  {item.badge && <span className={`badge ${item.badgeClass} nav-badge`}>{item.badge}</span>}
-                </Link>
-              </li>
-            ))}
-            <li className="nav-item nav-item--dropdown"
-                onMouseEnter={() => setDropdownOpen('football')}
-                onMouseLeave={() => setDropdownOpen(null)}>
-              <Link to="/bong-da" className="nav-dropdown-trigger">
-                Bóng Đá <FiChevronDown />
-              </Link>
-              {dropdownOpen === 'football' && (
-                <div className="dropdown-menu dropdown-menu--football">
-                  <Link to="/bong-da" onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
-                    Trang Chủ Bóng Đá
+            {NAV_ITEMS.map(item => {
+              if (item.isDropdown === 'genre') {
+                return (
+                  <li key="genre" className="nav-item nav-item--dropdown"
+                      onMouseEnter={() => setDropdownOpen('genre')}
+                      onMouseLeave={() => setDropdownOpen(null)}>
+                    <span className="nav-dropdown-trigger">
+                      Thể loại <FiChevronDown />
+                    </span>
+                    {dropdownOpen === 'genre' && (
+                      <div className="dropdown-menu">
+                        {genres.map(g => (
+                          <Link key={g.slug} to={`/the-loai/${g.slug}`}
+                                onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
+                            {g.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              }
+              if (item.isDropdown === 'country') {
+                return (
+                  <li key="country" className="nav-item nav-item--dropdown"
+                      onMouseEnter={() => setDropdownOpen('country')}
+                      onMouseLeave={() => setDropdownOpen(null)}>
+                    <span className="nav-dropdown-trigger">
+                      Quốc gia <FiChevronDown />
+                    </span>
+                    {dropdownOpen === 'country' && (
+                      <div className="dropdown-menu">
+                        {countries.map(c => (
+                          <Link key={c.slug} to={`/quoc-gia/${c.slug}`}
+                                onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
+                            {c.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              }
+              return (
+                <li key={item.path} className="nav-item">
+                  <Link to={item.path} onClick={() => setMobileOpen(false)} className={item.isButton ? 'nav-item-button' : ''}>
+                    {item.label}
+                    {item.badge && <span className={`badge ${item.badgeClass} nav-badge`}>{item.badge}</span>}
                   </Link>
-                  <Link to="/bong-da/highlights" onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
-                    Video Highlights
-                  </Link>
-                  <div className="dropdown-divider" />
-                  {LEAGUES.map(l => (
-                    <Link key={l.id} to={`/bong-da/giai-dau/${l.id}`}
-                          onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
-                      {l.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </li>
-            <li className="nav-item nav-item--dropdown"
-                onMouseEnter={() => setDropdownOpen('genre')}
-                onMouseLeave={() => setDropdownOpen(null)}>
-              <span className="nav-dropdown-trigger">
-                Thể Loại <FiChevronDown />
-              </span>
-              {dropdownOpen === 'genre' && (
-                <div className="dropdown-menu">
-                  {genres.map(g => (
-                    <Link key={g.slug} to={`/the-loai/${g.slug}`}
-                          onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
-                      {g.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </li>
-            <li className="nav-item nav-item--dropdown"
-                onMouseEnter={() => setDropdownOpen('country')}
-                onMouseLeave={() => setDropdownOpen(null)}>
-              <span className="nav-dropdown-trigger">
-                Quốc Gia <FiChevronDown />
-              </span>
-              {dropdownOpen === 'country' && (
-                <div className="dropdown-menu">
-                  {countries.map(c => (
-                    <Link key={c.slug} to={`/quoc-gia/${c.slug}`}
-                          onClick={() => { setDropdownOpen(null); setMobileOpen(false); }}>
-                      {c.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </li>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
