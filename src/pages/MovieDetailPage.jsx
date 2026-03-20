@@ -88,13 +88,7 @@ export default function MovieDetailPage() {
         </div>
 
         {/* Player - FULL WIDTH like rophim1.pro */}
-        {activeEp?.link_m3u8 ? (
-          <div className="md-player-section">
-            <div className="md-player">
-              <CustomPlayer url={activeEp.link_m3u8} title={`${movie.name} - ${activeEp.name === 'Full' ? 'Full' : 'Tập ' + activeEp.name}`} />
-            </div>
-          </div>
-        ) : activeEp?.link_embed && (
+        {activeEp?.link_embed && (
           <div className="md-player-section">
             <div className="md-player">
               <iframe src={activeEp.link_embed} allowFullScreen frameBorder="0"
