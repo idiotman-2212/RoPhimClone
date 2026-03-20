@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchMovieDetail, fetchMoviesByType, getImageUrl } from '../services/api';
 import MovieCard from '../components/MovieCard';
+import CustomPlayer from '../components/CustomPlayer';
 import { FiPlay, FiHeart, FiStar, FiChevronLeft, FiList, FiDownloadCloud, FiFlag, FiUser } from 'react-icons/fi';
 import './MovieDetailPage.css';
 
@@ -87,7 +88,13 @@ export default function MovieDetailPage() {
         </div>
 
         {/* Player - FULL WIDTH like rophim1.pro */}
-        {activeEp?.link_embed && (
+        {activeEp?.link_m3u8 ? (
+          <div className="md-player-section">
+            <div className="md-player">
+              <CustomPlayer url={activeEp.link_m3u8} title={`${movie.name} - ${activeEp.name === 'Full' ? 'Full' : 'Tập ' + activeEp.name}`} />
+            </div>
+          </div>
+        ) : activeEp?.link_embed && (
           <div className="md-player-section">
             <div className="md-player">
               <iframe src={activeEp.link_embed} allowFullScreen frameBorder="0"
