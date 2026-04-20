@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiMenu, FiX, FiChevronDown, FiUser } from 'react-icons/fi';
-import { fetchGenres, fetchCountries } from '../services/api';
+import { fetchOphimGenres, fetchOphimCountries } from '../services/ophim';
+import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 const NAV_ITEMS = [
@@ -23,6 +24,7 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -31,8 +33,9 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    fetchGenres().then(r => { if (r.data?.items) setGenres(r.data.items); });
-    fetchCountries().then(r => { if (r.data?.items) setCountries(r.data.items); });
+    // Load genres and countries from Ophim for real Vietnamese movie categories
+    fetchOphimGenres().then(items => setGenres(items));
+    fetchOphimCountries().then(items => setCountries(items));
   }, []);
 
   const handleSearch = (e) => {
@@ -143,9 +146,9 @@ export default function Header() {
         </nav>
 
         {/* Member button */}
-        <button className="header__member">
+        <button className="header__member" onClick={openAuthModal}>
           <FiUser />
-          <span>Thành viên</span>
+          <span>{user ? user.username : 'Thành viên'}</span>
         </button>
 
         {/* Mobile search toggle */}

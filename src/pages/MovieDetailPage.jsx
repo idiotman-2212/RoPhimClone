@@ -1,13 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { fetchMovieDetail, fetchMoviesByType, getImageUrl } from '../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { fetchOphimDetail, fetchOphimList, getOphimImageUrl } from '../services/ophim';
+import { getImageUrl } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import MovieCard from '../components/MovieCard';
-import CustomPlayer from '../components/CustomPlayer';
-import { FiPlay, FiHeart, FiStar, FiChevronLeft, FiList, FiDownloadCloud, FiFlag, FiUser } from 'react-icons/fi';
+import HlsPlayer from '../components/HlsPlayer';
+import {
+  FiPlay, FiHeart, FiStar, FiChevronLeft, FiList,
+  FiFlag, FiUser, FiVideo, FiX, FiShare2, FiDownload,
+  FiChevronDown, FiChevronUp, FiExternalLink
+} from 'react-icons/fi';
 import './MovieDetailPage.css';
+
+const TMDB_KEY = '051675f9cf39c424859f3e0aa5fcfd85';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
 
 export default function MovieDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { toggleBookmark, isBookmarked, addToHistory } = useAuth();
+
   const [movie, setMovie] = useState(null);
   const [episodes, setEpisodes] = useState([]);
   const [activeServer, setActiveServer] = useState(0);
@@ -15,30 +27,69 @@ export default function MovieDetailPage() {
   const [lightsOff, setLightsOff] = useState(false);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tmdb, setTmdb] = useState(null);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const [showAllEps, setShowAllEps] = useState(false);
+  const [showDesc, setShowDesc] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setLoading(true);
     setActiveEp(null);
     setActiveServer(0);
+    setTmdb(null);
+    setShowAllEps(false);
 
     async function load() {
       try {
-        const res = await fetchMovieDetail(slug);
-        const data = res.movie || res.data?.item || res;
-        setMovie(data);
-        const eps = res.episodes || data.episodes || [];
+        const result = await fetchOphimDetail(slug);
+        if (!result?.movie) { setMovie(null); setLoading(false); return; }
+
+        const { movie: m, episodes: rawEps } = result;
+        setMovie(m);
+
+        // Filter out servers/episodes with no valid links
+        const eps = rawEps.map(server => ({
+          ...server,
+          server_data: (server.server_data || []).filter(
+            ep => ep.link_m3u8 || ep.link_embed
+          )
+        })).filter(server => server.server_data.length > 0);
+
         setEpisodes(eps);
+
+        // Auto-select first valid episode
         if (eps.length > 0 && eps[0].server_data?.length > 0) {
           setActiveEp(eps[0].server_data[0]);
         }
 
-        const type = data.type === 'single' ? 'phim-le' : 'phim-bo';
-        const relRes = await fetchMoviesByType(type);
-        const relItems = relRes.data?.items || relRes.items || [];
-        setRelated(relItems.filter(m => m.slug !== slug).slice(0, 10));
+        // Fetch TMDB enrichment for better metadata + trailer
+        if (m.tmdb_id) {
+          const tmdbType = m.tmdb_type === 'tv' ? 'tv' : 'movie';
+          fetch(`${TMDB_BASE}/${tmdbType}/${m.tmdb_id}?api_key=${TMDB_KEY}&append_to_response=videos,credits,images&language=vi-VN`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data) {
+                // If we got no videos from vi-VN, fetch en-US videos
+                if (!data.videos?.results?.length) {
+                  return fetch(`${TMDB_BASE}/${tmdbType}/${m.tmdb_id}/videos?api_key=${TMDB_KEY}&language=en-US`)
+                    .then(r => r.json())
+                    .then(vids => { data.videos = vids; return data; });
+                }
+                return data;
+              }
+            })
+            .then(data => { if (data) setTmdb(data); })
+            .catch(console.error);
+        }
+
+        // Fetch related movies
+        const type = m.type === 'single' ? 'phim-le' : 'phim-bo';
+        const relRes = await fetchOphimList(type);
+        setRelated(relRes.items.filter(r => r.slug !== slug).slice(0, 12));
       } catch (err) {
         console.error('Error loading movie:', err);
+        setMovie(null);
       } finally {
         setLoading(false);
       }
@@ -46,65 +97,110 @@ export default function MovieDetailPage() {
     load();
   }, [slug]);
 
-  if (loading) {
-    return <div className="page-content"><div className="loading-container"><div className="loading-spinner" /></div></div>;
-  }
-
-  if (!movie) {
-    return <div className="page-content"><div className="container"><p>Không tìm thấy phim.</p></div></div>;
-  }
-
-  const thumb = getImageUrl(movie.thumb_url || movie.poster_url);
-  const currentServerEps = episodes[activeServer]?.server_data || [];
+  // Track watch history
+  useEffect(() => {
+    if (movie && activeEp) {
+      addToHistory(movie, activeEp.name || '1');
+    }
+  }, [movie, activeEp]);
 
   const handlePlayEp = (ep) => {
     setActiveEp(ep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Build completion status
-  const totalEps = movie.episode_total || '';
-  const currentEp = movie.episode_current || '';
-  const isCompleted = currentEp.toLowerCase().includes('hoàn tất') || currentEp.toLowerCase().includes('full');
+  if (loading) {
+    return (
+      <div className="page-content">
+        <div className="loading-container"><div className="loading-spinner" /></div>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="page-content">
+        <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: '20px', color: 'var(--text-muted)' }}>Không tìm thấy phim.</p>
+          <Link to="/" style={{ color: 'var(--accent)', marginTop: '16px', display: 'inline-block' }}>← Về trang chủ</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const backdrop = tmdb?.backdrop_path
+    ? `https://image.tmdb.org/t/p/w1280${tmdb.backdrop_path}`
+    : movie.thumb_url;
+
+  const poster = tmdb?.poster_path
+    ? `https://image.tmdb.org/t/p/w500${tmdb.poster_path}`
+    : movie.poster_url;
+
+  const trailer = tmdb?.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube')
+    || tmdb?.videos?.results?.[0];
+
+  const cast = tmdb?.credits?.cast?.slice(0, 10) || [];
+  const currentServerEps = episodes[activeServer]?.server_data || [];
+  const displayedEps = showAllEps ? currentServerEps : currentServerEps.slice(0, 50);
+  const isCompleted = (movie.episode_current || '').toLowerCase().includes('hoàn tất')
+    || (movie.episode_current || '').toLowerCase().includes('full');
+
+  const hlsSrc = activeEp?.link_m3u8 || '';
+  const embedSrc = activeEp?.link_embed || '';
 
   return (
     <div className={`movie-detail ${lightsOff ? 'lights-off' : ''}`}>
+
+      {/* Backdrop Hero */}
+      <div className="md-hero" style={{ backgroundImage: `url(${backdrop})` }}>
+        <div className="md-hero__gradient" />
+      </div>
+
       <div className="md-page">
 
-        {/* Title bar */}
+        {/* Title Bar */}
         <div className="md-titlebar">
           <div className="md-titlebar-inner">
-            <Link to="/" className="md-back"><FiChevronLeft /></Link>
-            <span className="md-titlebar-text">
-              Xem phim {movie.name}
-            </span>
+            <button className="md-back" onClick={() => navigate(-1)}><FiChevronLeft /></button>
+            <span className="md-titlebar-text">Xem phim {movie.name}</span>
             <span className="md-titlebar-ep">
               {activeEp && (activeEp.name === 'Full' ? 'Full' : `Phần 1 - Tập ${activeEp.name}`)}
             </span>
-            <button className="md-titlebar-list" title="Danh sách tập">
-              <FiList /> <span>Danh sách tập</span>
-            </button>
           </div>
         </div>
 
-        {/* Player - FULL WIDTH like rophim1.pro */}
-        {activeEp?.link_embed && (
-          <div className="md-player-section">
-            <div className="md-player">
-              <iframe src={activeEp.link_embed} allowFullScreen frameBorder="0"
-                      title={movie.name} allow="autoplay; encrypted-media" />
-            </div>
+        {/* Player */}
+        <div className="md-player-section">
+          <div className="md-player">
+            {(hlsSrc || embedSrc) ? (
+              <HlsPlayer
+                key={`${hlsSrc}||${embedSrc}`}
+                src={hlsSrc}
+                embedSrc={embedSrc}
+                title={`${movie.name}${activeEp?.name && activeEp.name !== 'Full' ? ` - Tập ${activeEp.name}` : ''}`}
+                poster={backdrop}
+              />
+            ) : (
+              <div className="md-player-empty">
+                <FiPlay style={{ fontSize: 56, opacity: 0.3 }} />
+                <span>Chọn tập để bắt đầu xem phim</span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Action Bar */}
         <div className="md-action-bar">
           <div className="md-action-inner">
             <div className="md-action-left">
-              <button className="md-action-item">
-                <FiHeart />
-                <span>Yêu thích</span>
+              <button
+                className={`md-action-item ${isBookmarked(movie.slug) ? 'bookmarked' : ''}`}
+                onClick={() => toggleBookmark(movie)}
+              >
+                <FiHeart style={isBookmarked(movie.slug) ? { fill: '#ef4444', color: '#ef4444' } : {}} />
+                <span>{isBookmarked(movie.slug) ? 'Đã thích' : 'Yêu thích'}</span>
               </button>
+
               <button className="md-action-item" onClick={() => setLightsOff(!lightsOff)}>
                 <span>{lightsOff ? '💡' : '🌙'}</span>
                 <span>Tắt đèn</span>
@@ -112,10 +208,21 @@ export default function MovieDetailPage() {
                   {lightsOff ? 'ON' : 'OFF'}
                 </span>
               </button>
-              <button className="md-action-item">
-                <FiDownloadCloud />
-                <span>Tải xuống</span>
+
+              {trailer && (
+                <button className="md-action-item" onClick={() => setShowTrailer(true)}>
+                  <FiVideo />
+                  <span>Trailer</span>
+                </button>
+              )}
+
+              <button className="md-action-item" onClick={() => {
+                navigator.clipboard?.writeText(window.location.href);
+              }}>
+                <FiShare2 />
+                <span>Chia sẻ</span>
               </button>
+
               <button className="md-action-item">
                 <FiFlag />
                 <span>Báo lỗi</span>
@@ -129,31 +236,34 @@ export default function MovieDetailPage() {
           </div>
         </div>
 
-        {/* Main Content + Sidebar Layout */}
+        {/* Main Layout */}
         <div className="md-main-layout">
           <div className="md-main-col">
-            
-            {/* Movie Info Section - Compact stacked layout */}
+
+            {/* Movie Info */}
             <div className="md-info-section">
               <div className="md-info-compact">
                 <div className="md-info-poster">
-                  <img src={thumb} alt={movie.name} />
+                  <img src={poster} alt={movie.name} />
                 </div>
-                
                 <div className="md-info-text">
                   <h1 className="md-movie-title">{movie.name}</h1>
                   <p className="md-movie-origin">{movie.origin_name}</p>
 
-                  {/* Badges row */}
                   <div className="md-badges">
-                    {movie.tmdb?.vote_average > 0 && (
-                      <span className="md-badge md-badge--imdb">IMDb {movie.tmdb.vote_average.toFixed(1)}</span>
+                    {tmdb?.vote_average > 0 && (
+                      <span className="md-badge md-badge--imdb">
+                        <FiStar style={{ marginRight: 4 }} />
+                        {tmdb.vote_average.toFixed(1)}
+                      </span>
                     )}
                     {movie.year && <span className="md-badge">{movie.year}</span>}
                     {movie.time && <span className="md-badge">{movie.time}</span>}
-                    {movie.episode_current && (
-                      <span className="md-badge">{movie.episode_current}</span>
-                    )}
+                    {movie.quality && <span className="md-badge md-badge--quality">{movie.quality}</span>}
+                    {movie.lang && <span className="md-badge md-badge--lang">{movie.lang}</span>}
+                    <span className={`md-badge ${isCompleted ? 'md-badge--done' : 'md-badge--ongoing'}`}>
+                      {isCompleted ? '✓ Hoàn Tất' : movie.episode_current}
+                    </span>
                   </div>
 
                   {/* Genre tags */}
@@ -167,7 +277,7 @@ export default function MovieDetailPage() {
                     </div>
                   )}
 
-                  {/* Meta info inline */}
+                  {/* Meta */}
                   <div className="md-meta-grid">
                     {movie.country?.length > 0 && (
                       <div className="md-meta-item">
@@ -182,131 +292,208 @@ export default function MovieDetailPage() {
                         </span>
                       </div>
                     )}
-                    {movie.quality && (
+                    {movie.director?.length > 0 && (
                       <div className="md-meta-item">
-                        <span className="md-meta-label">Chất lượng:</span>
-                        <span className="md-meta-value">{movie.quality}</span>
+                        <span className="md-meta-label">Đạo diễn:</span>
+                        <span className="md-meta-value">{movie.director.join(', ')}</span>
                       </div>
                     )}
-                    {movie.lang && (
+                    {movie.actor?.length > 0 && (
                       <div className="md-meta-item">
-                        <span className="md-meta-label">Ngôn ngữ:</span>
-                        <span className="md-meta-value">{movie.lang}</span>
+                        <span className="md-meta-label">Diễn viên:</span>
+                        <span className="md-meta-value">{movie.actor.join(', ')}</span>
                       </div>
                     )}
                   </div>
-
-                  {/* Completion status */}
-                  {currentEp && (
-                    <div className={`md-status ${isCompleted ? 'md-status--done' : ''}`}>
-                      <span className="md-status-icon">{isCompleted ? '✅' : '🔄'}</span>
-                      <span>{isCompleted ? `Đã hoàn thành: ${currentEp}` : currentEp}
-                        {totalEps ? ` / ${totalEps}` : ''}</span>
-                    </div>
-                  )}
-
                 </div>
               </div>
 
-              {/* Description & Ratings Below */}
-              <div className="md-info-bottom">
-                <div className="md-description">
-                  <p>
-                    {movie.content
-                      ? movie.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
-                      : 'Đang cập nhật...'}
-                  </p>
-                </div>
-                <div className="md-rating-inline">
-                  {movie.tmdb?.vote_average > 0 && (
-                    <div className="md-score-box">
-                      <div className="md-score-star">
-                        <FiStar />
-                        <span>{movie.tmdb.vote_average.toFixed(1)}</span>
-                      </div>
-                      <button className="md-score-btn">Đánh giá</button>
-                    </div>
-                  )}
-                  <div className="md-rating-action">
-                    <span className="md-rating-icon">💬</span>
-                    <span>Bình luận</span>
+              {/* Description */}
+              {movie.content && (
+                <div className="md-info-bottom">
+                  <div className={`md-description ${showDesc ? 'md-description--expanded' : ''}`}>
+                    <p>{movie.content}</p>
                   </div>
+                  {movie.content.length > 200 && (
+                    <button className="md-desc-toggle" onClick={() => setShowDesc(!showDesc)}>
+                      {showDesc ? <><FiChevronUp /> Thu gọn</> : <><FiChevronDown /> Xem thêm</>}
+                    </button>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
 
-        {/* Episodes Section */}
-        {episodes.length > 0 && (
-          <div className="md-episodes-section">
-            <div className="md-ep-header">
-              <h3 className="md-section-title">
-                <FiList /> Phần 1
-              </h3>
-              {/* Server tabs inline */}
-              <div className="md-server-tabs">
-                {episodes.map((server, idx) => (
-                  <button key={idx}
-                          className={`md-server-tab ${idx === activeServer ? 'md-server-tab--active' : ''}`}
-                          onClick={() => setActiveServer(idx)}>
-                    📺 {server.server_name}
+            {/* ── Episodes / Các bản chiếu ────────────────────── */}
+            {episodes.length > 0 && (
+              <div className="md-episodes-section">
+
+                {/* Multiple servers → "Các bản chiếu" card grid */}
+                {episodes.length > 1 && (
+                  <div className="md-versions-wrap">
+                    <h3 className="md-section-title">Các bản chiếu</h3>
+                    <div className="md-versions-grid">
+                      {episodes.map((server, idx) => (
+                        <button
+                          key={idx}
+                          className={`md-version-card ${activeServer === idx ? 'md-version-card--active' : ''}`}
+                          onClick={() => {
+                            setActiveServer(idx);
+                            // Auto-select first episode of this server
+                            if (server.server_data?.length > 0) {
+                              handlePlayEp(server.server_data[0]);
+                            }
+                          }}
+                        >
+                          <div className="md-version-thumb">
+                            <img src={poster} alt={movie.name} />
+                            <div className="md-version-overlay">
+                              <FiPlay className="md-version-play" />
+                            </div>
+                            <span className="md-version-server-badge">{server.server_name}</span>
+                          </div>
+                          <div className="md-version-info">
+                            <p className="md-version-title">{movie.name}</p>
+                            <button className="md-version-cta">Xem bản này</button>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Server tab strip (only show if multiple servers) */}
+                {episodes.length > 1 && (
+                  <div className="md-server-strip">
+                    {episodes.map((server, idx) => (
+                      <button
+                        key={idx}
+                        className={`md-server-pill ${activeServer === idx ? 'active' : ''}`}
+                        onClick={() => setActiveServer(idx)}
+                      >
+                        {server.server_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Episode grid for selected server */}
+                <div className="md-ep-header">
+                  <h3 className="md-section-title">
+                    <FiList /> {episodes.length === 1 ? 'Danh sách tập' : episodes[activeServer]?.server_name}
+                  </h3>
+                  <span className="md-ep-count">
+                    {currentServerEps.length} tập
+                  </span>
+                </div>
+
+                <div className="md-episode-grid">
+                  {displayedEps.map((ep, idx) => (
+                    <button
+                      key={`${ep.slug}-${idx}`}
+                      className={`md-ep-btn ${
+                        activeEp?.slug === ep.slug && activeEp?.name === ep.name
+                          ? 'md-ep-btn--active' : ''
+                      }`}
+                      onClick={() => handlePlayEp(ep)}
+                    >
+                      {activeEp?.slug === ep.slug && activeEp?.name === ep.name && (
+                        <FiPlay className="md-ep-play" />
+                      )}
+                      <span>{ep.name === 'Full' ? 'Full' : `Tập ${ep.name}`}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {currentServerEps.length > 50 && (
+                  <button className="md-show-more" onClick={() => setShowAllEps(!showAllEps)}>
+                    {showAllEps ? 'Thu gọn' : `Xem thêm ${currentServerEps.length - 50} tập`}
                   </button>
-                ))}
+                )}
               </div>
-              <div className="md-ep-compact">
-                <span>Rút gọn</span>
-                <span className="md-toggle md-toggle--on">●</span>
+            )}
+
+            {/* Related */}
+            {related.length > 0 && (
+              <div className="md-related-section">
+                <h3 className="md-section-title">Phim Liên Quan</h3>
+                <div className="md-related-grid">
+                  {related.map(m => <MovieCard key={m._id || m.slug} movie={m} />)}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Episode grid - LARGE buttons with play icons */}
-            <div className="md-episode-grid">
-              {currentServerEps.map((ep, idx) => (
-                <button key={idx}
-                        className={`md-ep-btn ${activeEp?.slug === ep.slug && activeEp?.name === ep.name ? 'md-ep-btn--active' : ''}`}
-                        onClick={() => handlePlayEp(ep)}>
-                  <FiPlay className="md-ep-play" />
-                  <span>{ep.name === 'Full' ? 'Full' : `Tập ${ep.name}`}</span>
-                </button>
-              ))}
-            </div>
           </div>
-        )}
 
-        {/* Related Movies */}
-        {related.length > 0 && (
-          <div className="md-related-section">
-            <h3 className="md-section-title">Phim Đề Cử</h3>
-            <div className="md-related-grid">
-              {related.map(m => <MovieCard key={m._id || m.slug} movie={m} />)}
-            </div>
-          </div>
-        )}
-        
-        </div> {/* End md-main-col */}
+          {/* Sidebar */}
+          <div className="md-sidebar-col">
+            {/* Cast from TMDB */}
+            {cast.length > 0 && (
+              <div className="md-sidebar-widget">
+                <h3 className="md-sidebar-title">Top Diễn Viên</h3>
+                <div className="md-actor-list">
+                  {cast.slice(0, 6).map(actor => (
+                    <div key={actor.id} className="md-actor-item">
+                      <div className="md-actor-avatar">
+                        {actor.profile_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                            alt={actor.name}
+                          />
+                        ) : (
+                          <FiUser />
+                        )}
+                      </div>
+                      <div className="md-actor-info">
+                        <div className="md-actor-name">{actor.name}</div>
+                        <div className="md-actor-role">{actor.character || 'Diễn viên'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Sidebar Column */}
-        <div className="md-sidebar-col">
-          <div className="md-sidebar-widget">
-            <h3 className="md-sidebar-title">Top Diễn Viên</h3>
-            <div className="md-actor-list">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="md-actor-item">
-                  <div className="md-actor-avatar">
-                    <FiUser />
+            {/* TMDB score */}
+            {tmdb?.vote_average > 0 && (
+              <div className="md-sidebar-widget">
+                <h3 className="md-sidebar-title">Đánh Giá</h3>
+                <div className="md-score-display">
+                  <div className="md-score-circle">
+                    <span className="md-score-num">{tmdb.vote_average.toFixed(1)}</span>
+                    <span className="md-score-label">/ 10</span>
                   </div>
-                  <div className="md-actor-info">
-                    <div className="md-actor-name">Đang cập nhật...</div>
-                    <div className="md-actor-role">Diễn viên</div>
+                  <div className="md-score-meta">
+                    <p>TMDB Score</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                      {tmdb.vote_count?.toLocaleString()} lượt đánh giá
+                    </p>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Trailer Modal */}
+      {showTrailer && trailer && (
+        <div className="md-trailer-modal" onClick={() => setShowTrailer(false)}>
+          <div className="md-trailer-content" onClick={e => e.stopPropagation()}>
+            <button className="md-trailer-close" onClick={() => setShowTrailer(false)}>
+              <FiX />
+            </button>
+            <div className="md-trailer-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+                title="Trailer"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
           </div>
-        </div> {/* End md-sidebar-col */}
-        
-        </div> {/* End md-main-layout */}
-        
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useLocation } from 'react-router-dom';
-import { fetchMoviesByType, fetchByCategory, fetchMoviesByTypeWithFilters } from '../services/api';
+import { fetchOphimList, fetchOphimByCategory } from '../services/ophim';
 import MovieCard from '../components/MovieCard';
 import Pagination from '../components/Pagination';
 import FilterBar from '../components/FilterBar';
@@ -12,15 +12,6 @@ const TYPE_TITLES = {
   'hoat-hinh': 'Hoạt Hình',
   'tv-shows': 'TV Shows',
 };
-
-function extractTotalPages(data) {
-  const pagination = data.params?.pagination || data.pagination || {};
-  if (pagination.totalPages) return pagination.totalPages;
-  const totalItems = pagination.totalItems || 0;
-  const perPage = pagination.totalItemsPerPage || 24;
-  if (totalItems > 0) return Math.ceil(totalItems / perPage);
-  return 1;
-}
 
 export default function MovieListPage() {
   const { type, slug } = useParams();
@@ -48,19 +39,19 @@ export default function MovieListPage() {
         let res;
         if (slug) {
           const filterType = location.pathname.startsWith('/the-loai') ? 'the-loai' : 'quoc-gia';
-          res = await fetchByCategory(filterType, slug, currentPage, filters);
+          res = await fetchOphimByCategory(filterType, slug, currentPage, filters);
+          setTitle(res.title || slug);
         } else {
-          res = await fetchMoviesByTypeWithFilters(type, currentPage, filters);
+          res = await fetchOphimList(type, currentPage);
+          setTitle(TYPE_TITLES[type] || 'Danh sách phim');
         }
-        const data = res.data || res;
-        const items = data.items || [];
-        setMovies(items);
-        setTotalPages(extractTotalPages(data));
-        const pagination = data.params?.pagination || data.pagination || {};
-        setTotalItems(pagination.totalItems || items.length);
-        setTitle(data.titlePage || TYPE_TITLES[type] || slug || 'Danh sách phim');
+
+        setMovies(res.items || []);
+        setTotalPages(res.totalPages || 1);
+        setTotalItems(res.totalItems || 0);
       } catch (err) {
         console.error('Error loading movies:', err);
+        setMovies([]);
       } finally {
         setLoading(false);
       }
@@ -79,7 +70,6 @@ export default function MovieListPage() {
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    // Reset to page 1 when filters change
     const params = { page: '1' };
     if (newFilters.country) params.country = newFilters.country;
     if (newFilters.year) params.year = newFilters.year;
@@ -97,14 +87,14 @@ export default function MovieListPage() {
             <span className="total-count">{totalItems.toLocaleString()} phim</span>
           )}
         </div>
-        
+
         <FilterBar filters={filters} onChange={handleFilterChange} />
 
         {loading ? (
           <div className="loading-container"><div className="loading-spinner" /></div>
         ) : movies.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '60px 0' }}>
-            Không tìm thấy phim nào với bộ lọc hiện tại.
+            Không tìm thấy phim nào.
           </p>
         ) : (
           <>

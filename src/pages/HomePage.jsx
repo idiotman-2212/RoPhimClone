@@ -1,51 +1,72 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchMoviesByType } from '../services/api';
+import { fetchOphimList } from '../services/ophim';
 import HeroCarousel from '../components/HeroCarousel';
 import MovieCarousel from '../components/MovieCarousel';
 import CategoryInterest from '../components/CategoryInterest';
 import MovieCard from '../components/MovieCard';
-import { FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight, FiTrendingUp, FiFilm, FiTv, FiStar } from 'react-icons/fi';
 
-const CAROUSEL_SECTIONS = [
-  { titlePrefix: 'Phim', titleHighlight: 'Hàn Quốc', titleSuffix: ' tập mới', highlightClass: 'highlight-pink', type: 'phim-bo', path: '/danh-sach/phim-bo' },
-  { titlePrefix: 'Phim', titleHighlight: 'Hành Động', titleSuffix: ' Mới', highlightClass: 'highlight-blue', type: 'phim-le', path: '/danh-sach/phim-le' },
-  { titlePrefix: '', titleHighlight: 'Hoạt Hình', titleSuffix: ' Hay', highlightClass: 'highlight-orange', type: 'hoat-hinh', path: '/danh-sach/hoat-hinh' },
+const SECTIONS = [
+  {
+    id: 'phim-moi',
+    type: 'phim-moi-cap-nhat',
+    title: <><span className="highlight-green">Phim Mới</span> Cập Nhật</>,
+    path: '/danh-sach/phim-moi-cap-nhat',
+    isGrid: true,
+  },
+  {
+    id: 'phim-bo',
+    type: 'phim-bo',
+    title: <><span className="highlight-pink">Phim Bộ</span> Đang Hot</>,
+    path: '/danh-sach/phim-bo',
+  },
+  {
+    id: 'phim-le',
+    type: 'phim-le',
+    title: <><span className="highlight-blue">Phim Lẻ</span> Hay Nhất</>,
+    path: '/danh-sach/phim-le',
+  },
+  {
+    id: 'hoat-hinh',
+    type: 'hoat-hinh',
+    title: <><span className="highlight-orange">Hoạt Hình</span> Mới Nhất</>,
+    path: '/danh-sach/hoat-hinh',
+  },
+  {
+    id: 'tv-shows',
+    type: 'tv-shows',
+    title: <><span className="highlight-purple">TV Shows</span> Nổi Bật</>,
+    path: '/danh-sach/tv-shows',
+  },
 ];
-
-const GRID_SECTION = { titlePrefix: 'Phim', titleHighlight: 'Mới', titleSuffix: ' Cập Nhật', highlightClass: 'highlight-green', type: 'phim-moi-cap-nhat', path: '/danh-sach/phim-moi-cap-nhat' };
 
 export default function HomePage() {
   const [heroMovies, setHeroMovies] = useState([]);
-  const [carouselData, setCarouselData] = useState({});
-  const [gridMovies, setGridMovies] = useState([]);
+  const [sections, setSections] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     async function load() {
       try {
-        // Load all sections
-        const [gridRes, ...carouselResults] = await Promise.all([
-          fetchMoviesByType(GRID_SECTION.type),
-          ...CAROUSEL_SECTIONS.map(s => fetchMoviesByType(s.type)),
-        ]);
+        const results = await Promise.allSettled(
+          SECTIONS.map(s => fetchOphimList(s.type, 1))
+        );
 
-        // Grid section (newly updated movies, less metadata)
-        const gridItems = gridRes.data?.items || gridRes.items || [];
-        setGridMovies(gridItems);
-
-        // Carousel sections
-        const newCarouselData = {};
-        carouselResults.forEach((res, i) => {
-          const items = res.data?.items || res.items || [];
-          newCarouselData[CAROUSEL_SECTIONS[i].type] = items;
+        const data = {};
+        results.forEach((res, i) => {
+          if (res.status === 'fulfilled') {
+            data[SECTIONS[i].id] = res.value.items || [];
+          } else {
+            data[SECTIONS[i].id] = [];
+          }
         });
-        setCarouselData(newCarouselData);
 
-        // Feed rich data to Hero Banner (from Phim Bộ)
-        const phimBoItems = newCarouselData['phim-bo'] || [];
-        setHeroMovies(phimBoItems.slice(0, 10));
+        setSections(data);
+        // Use phim-bo for hero banner as they tend to have best backdrops
+        const hero = data['phim-bo'] || data['phim-moi'] || [];
+        setHeroMovies(hero.slice(0, 8));
       } catch (err) {
         console.error('Error loading homepage:', err);
       } finally {
@@ -63,6 +84,9 @@ export default function HomePage() {
     );
   }
 
+  const gridSection = SECTIONS.find(s => s.isGrid);
+  const carouselSections = SECTIONS.filter(s => !s.isGrid);
+
   return (
     <div>
       {/* Hero Banner */}
@@ -70,45 +94,41 @@ export default function HomePage() {
 
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         <div className="fluid-gap" style={{ paddingTop: '30px', paddingBottom: '60px' }}>
-          {/* Category Interest */}
+
+          {/* Category Interest chips */}
           <CategoryInterest />
 
-          {/* Horizontal Scroll Carousels */}
-          {CAROUSEL_SECTIONS.map(section => {
-            const items = carouselData[section.type] || [];
+          {/* Phim Mới Grid */}
+          {gridSection && sections[gridSection.id]?.length > 0 && (
+            <div className="section">
+              <div className="section-header">
+                <h2 className="section-title">{gridSection.title}</h2>
+                <Link to={gridSection.path} className="section-link">
+                  Xem tất cả <FiChevronRight />
+                </Link>
+              </div>
+              <div className="movie-grid">
+                {sections[gridSection.id].slice(0, 24).map(movie => (
+                  <MovieCard key={movie._id || movie.slug} movie={movie} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Carousels */}
+          {carouselSections.map(section => {
+            const items = sections[section.id] || [];
             if (items.length === 0) return null;
             return (
               <MovieCarousel
-                key={section.type}
-                title={
-                  <>
-                    {section.titlePrefix} <span className={section.highlightClass}>{section.titleHighlight}</span>{section.titleSuffix}
-                  </>
-                }
+                key={section.id}
+                title={section.title}
                 linkTo={section.path}
                 movies={items}
               />
             );
           })}
 
-          {/* Traditional Grid Section */}
-          {gridMovies.length > 0 && (
-            <div className="section">
-              <div className="section-header">
-                <h2 className="section-title">
-                  {GRID_SECTION.titlePrefix} <span className={GRID_SECTION.highlightClass}>{GRID_SECTION.titleHighlight}</span>{GRID_SECTION.titleSuffix}
-                </h2>
-                <Link to={GRID_SECTION.path} className="section-link">
-                  Xem tất cả <FiChevronRight />
-                </Link>
-              </div>
-              <div className="movie-grid">
-                {gridMovies.map(movie => (
-                  <MovieCard key={movie._id || movie.slug} movie={movie} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

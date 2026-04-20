@@ -10,6 +10,7 @@ import SearchPage from './pages/SearchPage';
 import FootballPage from './pages/FootballPage';
 import FootballLeaguePage from './pages/FootballLeaguePage';
 import FootballHighlightsPage from './pages/FootballHighlightsPage';
+import AuthModal from './components/AuthModal';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -50,6 +51,7 @@ export default function App() {
       </Routes>
       <Footer />
       <ScrollToTop />
+      <AuthModal />
     </BrowserRouter>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { searchMovies } from '../services/api';
+import { searchOphim } from '../services/ophim';
 import MovieCard from '../components/MovieCard';
 import Pagination from '../components/Pagination';
 
@@ -10,6 +10,7 @@ export default function SearchPage() {
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const [movies, setMovies] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -17,11 +18,11 @@ export default function SearchPage() {
     if (!keyword) return;
     setLoading(true);
 
-    searchMovies(keyword, currentPage)
+    searchOphim(keyword, currentPage)
       .then(res => {
-        const data = res.data || res;
-        setMovies(data.items || []);
-        setTotalPages(data.params?.pagination?.totalPages || 1);
+        setMovies(res.items || []);
+        setTotalPages(res.totalPages || 1);
+        setTotalItems(res.totalItems || 0);
       })
       .catch(err => console.error('Search error:', err))
       .finally(() => setLoading(false));
@@ -36,7 +37,13 @@ export default function SearchPage() {
       <div className="container">
         <h1 className="page-title">
           {keyword ? `Kết quả tìm kiếm: "${keyword}"` : 'Tìm kiếm phim'}
+          {totalItems > 0 && (
+            <span className="total-count" style={{ marginLeft: 12 }}>
+              {totalItems.toLocaleString()} kết quả
+            </span>
+          )}
         </h1>
+
         {loading ? (
           <div className="loading-container"><div className="loading-spinner" /></div>
         ) : !keyword ? (

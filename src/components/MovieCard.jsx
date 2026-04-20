@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { getImageUrl } from '../services/api';
 import './MovieCard.css';
 
 function formatEpisodeBadge(movie) {
@@ -26,10 +25,26 @@ function formatEpisodeBadge(movie) {
   return { label, badgeClass };
 }
 
+const OPHIM_IMG_BASE = 'https://img.ophim.live/uploads/movies/';
+const TMDB_IMG_BASE  = 'https://image.tmdb.org/t/p/w500';
+
 export default function MovieCard({ movie, landscape = false }) {
-  const thumb = landscape
-    ? getImageUrl(movie.poster_url || movie.thumb_url)
-    : getImageUrl(movie.thumb_url || movie.poster_url);
+  // Resolve image URL:
+  //  - starts with "http"  → already absolute (Ophim full URL)
+  //  - starts with "/"     → TMDB relative path
+  //  - everything else     → Ophim short filename (e.g. "movie-thumb.jpg")
+  function resolveImg(url) {
+    if (!url) return 'https://placehold.co/300x450/0f0f1a/ffffff?text=No+Image';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/'))    return `${TMDB_IMG_BASE}${url}`;
+    return `${OPHIM_IMG_BASE}${url}`;
+  }
+
+  const rawThumb = landscape
+    ? (movie.poster_url || movie.thumb_url)
+    : (movie.thumb_url  || movie.poster_url);
+  const thumb = resolveImg(rawThumb);
+
 
   const epBadge = formatEpisodeBadge(movie);
 
